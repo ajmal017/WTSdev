@@ -1,5 +1,5 @@
 # WTS development environment from the image wtsdev derived from Anaconda 3
-docker run -d -p 8888:8888 --name wtsdevenv -v /home/wts/wts-github/jupyter_notebooks:/opt/notebooks wtsdev /bin/bash -c "/opt/conda/bin/jupyter notebook --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser --allow-root"
+docker run -d -p 8888:8888 --name wtsdevenv -v /home/wts/wtsgit/jupyter_notebooks:/opt/notebooks wtsdev /bin/bash -c "/opt/conda/bin/jupyter notebook --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser --allow-root"
 # docker commit devConda MyCondaImage
 
 

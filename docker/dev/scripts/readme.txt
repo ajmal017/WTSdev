@@ -11,8 +11,7 @@ wtsdev
 		2. docker rm wtsdevenv
 		3. docker rmi wtsdev
 		4. docker build -t wtsdev:latest .
-		5. Execute ../wtsdevenv.sh
-		
+		5. Execute ../wtsdevenv.sh	
 
 Files:
 wtsdevenv.sh

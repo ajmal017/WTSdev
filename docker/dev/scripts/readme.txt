@@ -3,7 +3,16 @@ wtsdev
 	This folder contains the Dockerfile to create an image wtsdev from anaconda3 image taken from dockerhub.
 	The dockerfile also does the following on top of the image.
 		1. Installs Jupyter notebooks inside.
-		...Just starting with Jupyter notes. To be further customised.
+		2. Installed some python libraries to test projects in Python bible.
+		...To be further customised.
+		
+	To build this file execute the 4th command from this folder. Before that we need to clear the existing setup.
+		1. docker stop wtsdevenv
+		2. docker rm wtsdevenv
+		3. docker rmi wtsdev
+		4. docker build -t wtsdev:latest .
+		5. Execute ../wtsdevenv.sh
+		
 
 Files:
 wtsdevenv.sh

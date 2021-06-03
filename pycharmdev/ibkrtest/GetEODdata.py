@@ -5,10 +5,18 @@ import time
 
 from ibapi.client import EClient, Contract
 from ibapi.wrapper import EWrapper
-from ibapi.utils import iswrapper
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplfinance as mplf
+
 
 class MarketReader(EWrapper, EClient):
     ''' Serves as the client and the wrapper '''
+
+    dff = pd.DataFrame()
+    def iswrapper(fn):
+        return fn
 
     def __init__(self, addr, port, client_id):
         EClient. __init__(self, self)
@@ -21,40 +29,17 @@ class MarketReader(EWrapper, EClient):
         thread.start()
 
     @iswrapper
-    def tickByTickMidPoint(self, reqId, tick_time, midpoint):
-        ''' Called in response to reqTickByTickData '''
-
-        print('tickByTickMidPoint - Midpoint tick: {}'.format(midpoint))
-
-    @iswrapper
-    def tickPrice(self, reqId, field, price, attribs):
-        ''' Called in response to reqMktData '''
-
-        print('tickPrice - field: {}, price: {}'.format(field, price))
-
-    @iswrapper
-    def tickSize(self, reqId, field, size):
-        ''' Called in response to reqMktData '''
-
-        print('tickSize - field: {}, size: {}'.format(field, size))
-
-    @iswrapper
-    def realtimeBar(self, reqId, time, open, high, low, close, volume, WAP, count):
-        ''' Called in response to reqRealTimeBars '''
-
-        print('realtimeBar - Opening price: {}'.format(open))
-
-    @iswrapper
     def historicalData(self, reqId, bar):
         ''' Called in response to reqHistoricalData '''
-
         #print('historicalData - Close price: {}'.format(bar.close))
-        print (bar)
-    @iswrapper
-    def fundamentalData(self, reqId, data):
-        ''' Called in response to reqFundamentalData '''
+        # df3 = pd.DataFrame()
 
-        print('Fundamental data: ' + data)
+        df1 = pd.DataFrame({"Date": bar.date, "Open": bar.open, "High": bar.high, "Low": bar.low, "Close": bar.close, "Volume": bar.volume, "Average": bar.average, "BarCount": bar.barCount}, index=[bar.date])
+
+        self.dff = pd.concat([self.dff, df1])
+        # print(df1)
+
+
 
     def error(self, reqId, code, msg):
         ''' Called if an error occurs '''
@@ -68,7 +53,7 @@ def main():
 
     # Request the current time
     con = Contract()
-    con.symbol = 'ICICIBANK'
+    con.symbol = 'SBIN'
     con.secType = 'STK'
     con.exchange = 'NSE'
     con.currency = 'INR'
@@ -80,21 +65,29 @@ def main():
     #client.reqMktData(1, con, '', False, False, [])
 
     # Request current bars
-    #client.reqRealTimeBars(2, con, 5, 'MIDPOINT', True, [])
+    #client.reqRealTimeBars(2, con, 5, 'TRADES', True, [])
 
     # Request historical bars
     now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
-    client.reqHistoricalData(3, con, now, '2 w', '1 day',
-        'MIDPOINT', False, 1, False, [])
+    #client.reqHistoricalData(3, con, now, '2 w', '1 day', 'TRADES', False, 1, False, [])
+    client.reqHistoricalData(3, con, '20210525 00:00:00', '3d d', '1 min', 'TRADES', False, 1, False, [])
 
     # Request fundamental data
     #client.reqFundamentalData(4, con, 'ReportSnapshot', [])
 
     # Sleep while the requests are processed
-    time.sleep(5)
+    time.sleep(5)   
 
     # Disconnect from TWS
     client.disconnect()
+
+
+    client.dff['Close'].plot()
+    plt.show()
+
+    #mplf.plot(client.dff)
+
+    print(client.dff)
 
 if __name__ == '__main__':
     main()

@@ -7,87 +7,98 @@ from ibapi.client import EClient, Contract
 from ibapi.wrapper import EWrapper
 
 import pandas as pd
-import matplotlib.pyplot as plt
-import mplfinance as mplf
+import wtsdblib
 
 
 class MarketReader(EWrapper, EClient):
     ''' Serves as the client and the wrapper '''
 
+    # Class variables - Start
     dff = pd.DataFrame()
+    # Dummy entry to declare the variable
+    dbconn = wtsdblib.wtsdbconn.newconnection('')
+    ibkr_current_symbol = ''
+
+    # Class variables - End
     def iswrapper(fn):
         return fn
 
-    def __init__(self, addr, port, client_id):
+
+    def __init__(self, addr, port, client_id, dbsystem):
         EClient. __init__(self, self)
 
         # Connect to TWS
         self.connect(addr, port, client_id)
+        self.dbconn = wtsdblib.wtsdbconn.newconnection(dbsystem)
 
         # Launch the client thread
         thread = Thread(target=self.run)
         thread.start()
 
+
     @iswrapper
     def historicalData(self, reqId, bar):
         ''' Called in response to reqHistoricalData '''
-        #print('historicalData - Close price: {}'.format(bar.close))
-        # df3 = pd.DataFrame()
 
-        df1 = pd.DataFrame({"Date": bar.date, "Open": bar.open, "High": bar.high, "Low": bar.low, "Close": bar.close, "Volume": bar.volume, "Average": bar.average, "BarCount": bar.barCount}, index=[bar.date])
+        #df1 = pd.DataFrame({"Date": bar.date, "Open": bar.open, "High": bar.high, "Low": bar.low, "Close": bar.close, "Volume": bar.volume, "Average": bar.average, "BarCount": bar.barCount}, index=[bar.date])
+        #self.dff = pd.concat([self.dff, df1])
+        try:
+            dbcursor = self.dbconn.cursor()
+            dbquery = '''INSERT INTO wtst."IBKR_EOD_DATA"("IBKR_SYMBOL","Date", "Open", "High", "Low", "Close", "Volume", "Average", "BarCount") VALUES (%s, date(%s), %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING '''
+            dbparams = (self.ibkr_current_symbol, bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume, bar.average, bar.barCount)
+            dbcursor.execute(dbquery, dbparams)
+            self.dbconn.commit()
+        except (Exception, psycopg2.Error) as err:
+            print("Failed to insert record into table", err)
+        finally:
+            dbcursor.close()
 
-        self.dff = pd.concat([self.dff, df1])
-        # print(df1)
-
-
-
+    @iswrapper
     def error(self, reqId, code, msg):
         ''' Called if an error occurs '''
-
-        print('Error {}: {}'.format(code, msg))
+        print('Error {}: {} : {}'.format(code, self.ibkr_current_symbol, msg))
 
 def main():
+    # Create the client and connect to TWS & Database
+    client = MarketReader('127.0.0.1', 7497, 0, dbsystem='WTSDEV')
 
-    # Create the client and connect to TWS
-    client = MarketReader('127.0.0.1', 7497, 0)
+    # Request historical bars for each of the stock in the table IBKR_SYMBOLS_EQUITY
 
-    # Request the current time
+    now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
+
+    # Set the IBKR contract details
     con = Contract()
-    con.symbol = 'SBIN'
     con.secType = 'STK'
     con.exchange = 'NSE'
     con.currency = 'INR'
 
-    # Request ten ticks containing midpoint data
-    #client.reqTickByTickData(0, con, 'MidPoint', 10, True)
+    # For the symbol, loop the values in the table.
 
-    # Request market data
-    #client.reqMktData(1, con, '', False, False, [])
+    dbcursor = client.dbconn.cursor()
+    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE '''
+    # dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
 
-    # Request current bars
-    #client.reqRealTimeBars(2, con, 5, 'TRADES', True, [])
+    dbcursor.execute(dbquery)
+    dbrecordset = dbcursor.fetchall()
+    reqnum = 0
+    for dbrow in dbrecordset:
+        client.ibkr_current_symbol = dbrow[0]
+        con.symbol = dbrow[0]
+        reqnum += 1
+        client.reqHistoricalData(reqnum, con, now, '1 m', '1 day', 'TRADES', False, 1, False, [])
+        # Sleep while the requests are processed
+        time.sleep(1)
 
-    # Request historical bars
-    now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
-    #client.reqHistoricalData(3, con, now, '2 w', '1 day', 'TRADES', False, 1, False, [])
-    client.reqHistoricalData(3, con, '20210525 00:00:00', '3d d', '1 min', 'TRADES', False, 1, False, [])
+    # Finally, give additional 5 seconds for the code to run.
+    time.sleep(5)
 
-    # Request fundamental data
-    #client.reqFundamentalData(4, con, 'ReportSnapshot', [])
-
-    # Sleep while the requests are processed
-    time.sleep(5)   
-
-    # Disconnect from TWS
+    # Disconnect from TWS & DB
+    dbcursor.close()
     client.disconnect()
+    if client.dbconn is not None:
+        client.dbconn.close()
 
-
-    client.dff['Close'].plot()
-    plt.show()
-
-    #mplf.plot(client.dff)
-
-    print(client.dff)
+    #print(client.dff)
 
 if __name__ == '__main__':
     main()

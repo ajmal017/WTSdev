@@ -1,0 +1,207 @@
+<ReportSnapshot Major="1" Minor="0" Revision="1">
+	<CoIDs>
+		<CoID Type="RepNo">A4442</CoID>
+		<CoID Type="CompanyName">State Bank of India</CoID>
+		<CoID Type="OrganizationPermID">4295873809</CoID>
+	</CoIDs>
+	<Issues>
+		<Issue ID="1" Type="C" Desc="Common Stock" Order="1">
+			<IssueID Type="Name">Fully Paid Ord. Shrs</IssueID>
+			<IssueID Type="Ticker">SBIN</IssueID>
+			<IssueID Type="ISIN">INE062A01020</IssueID>
+			<IssueID Type="RIC">SBI.NS</IssueID>
+			<IssueID Type="DisplayRIC">SBI.NS</IssueID>
+			<IssueID Type="InstrumentPI">349946</IssueID>
+			<IssueID Type="QuotePI">783207</IssueID>
+			<IssueID Type="InstrumentPermID">8589968502</IssueID>
+			<IssueID Type="QuotePermID">55837409379</IssueID>
+			<Exchange Code="NSE" Country="IND">National Stock Exchange of India</Exchange>
+			<GlobalListingType>OSR</GlobalListingType>
+			<MostRecentSplit Date="2014-11-20">10.0</MostRecentSplit>
+		</Issue>
+	</Issues>
+	<CoGeneralInfo>
+		<CoStatus Code="1">Active</CoStatus>
+		<CoType Code="EQU">Equity Issue</CoType>
+		<LastModified>2021-05-22</LastModified>
+		<LatestAvailableAnnual>2021-03-31</LatestAvailableAnnual>
+		<LatestAvailableInterim>2021-03-31</LatestAvailableInterim>
+		<Employees LastUpdated="2020-03-31">249448</Employees>
+		<SharesOut Date="2021-03-31" TotalFloat="3844836246.0">8924600000.0</SharesOut>
+		<ReportingCurrency Code="INR">Rupee</ReportingCurrency>
+		<MostRecentExchange Date="2021-06-01">72.86</MostRecentExchange>
+	</CoGeneralInfo>
+	<TextInfo>
+		<Text Type="Business Summary" lastModified="2020-10-23T07:46:07">State Bank of India is an India-based banking and financial services company. The Companys segments include Treasury, Corporate/Wholesale Banking, Retail Banking and Other Banking Business. Treasury includes the investment portfolio and trading in foreign exchange contracts and derivative contracts. Corporate/Wholesale Banking comprises the lending activities of corporate accounts group, commercial clients group and stressed assets resolution group that includes providing loans and transaction services to corporate and institutional clients. Retail Banking comprises of retail branches, which primarily includes Personal Banking activities including lending activities to corporate customers having banking relations with these branches. Other Banking Business segment includes the operations of all the Non-Banking subsidiaries/Joint Ventures other than SBI Life Insurance Co. Ltd. and SBI General Insurance Co. Ltd. of the group The Company has approximately 22,100 branches and 58,555 ATMs</Text>
+		<Text Type="Financial Summary" lastModified="2021-05-22T06:13:30">BRIEF: For the fiscal year ended 31 March 2021, State Bankof India interest income increased 3% to RS2.781T. Netinterest income after loan loss provision increased 27% toRS822.5B.  Net income before extraordinary items decreased2% to RS224.05B. Net interest income after loan lossprovision reflects Revenue on investments increase of 16%to RS871.31B, Other interest increase of 49% to RS96.63B.</Text>
+	</TextInfo>
+	<contactInfo lastUpdated="2021-05-24T00:15:47">
+		<streetAddress line="1">Corporate Centre</streetAddress>
+		<streetAddress line="2">State Bank Bhavan, Madame Cama Road</streetAddress>
+		<streetAddress line="3"></streetAddress>
+		<city>MUMBAI</city>
+		<state-region></state-region>
+		<postalCode>400021</postalCode>
+		<country code="IND">India</country>
+		<contactName></contactName>
+		<contactTitle></contactTitle>
+		<phone>
+			<phone type="mainphone">
+				<countryPhoneCode>91</countryPhoneCode>
+				<city-areacode>22</city-areacode>
+				<number>22740841</number>
+			</phone>
+			<phone type="mainfax">
+				<countryPhoneCode>91</countryPhoneCode>
+				<city-areacode>22</city-areacode>
+				<number>22855348</number>
+			</phone>
+		</phone>
+	</contactInfo>
+	<webLinks lastUpdated="2018-09-19T03:30:11"><webSite mainCategory="Home Page">https://www.sbi.co.in/</webSite><eMail mainCategory="Company Contact/E-mail">sbi.igr@alankit.com</eMail></webLinks>
+	<peerInfo lastUpdated="2021-05-24T00:15:47">
+		<IndustryInfo>
+			<Industry type="TRBC" order="1" reported="0" code="5510101010" mnem="">Banks (NEC)</Industry>
+			<Industry type="NAICS" order="1" reported="0" code="522110" mnem="">Commercial Banking</Industry>
+			<Industry type="NAICS" order="2" reported="0" code="523110" mnem="">Investment Banking and Securities Dealing</Industry>
+			<Industry type="NAICS" order="3" reported="0" code="523920" mnem="">Portfolio Management</Industry>
+			<Industry type="NAICS" order="4" reported="0" code="523120" mnem="">Securities Brokerage</Industry>
+			<Industry type="NAICS" order="5" reported="0" code="524126" mnem="">Direct Property &amp; Casualty Insurance Carriers</Industry>
+			<Industry type="NAICS" order="6" reported="0" code="524113" mnem="">Direct Life Insurance Carriers</Industry>
+			<Industry type="SIC" order="1" reported="0" code="6029" mnem="">Commercial Banks, Nec</Industry>
+			<Industry type="SIC" order="2" reported="0" code="6211" mnem="">Security Brokers And Dealers</Industry>
+			<Industry type="SIC" order="3" reported="0" code="6282" mnem="">Investment Advice</Industry>
+			<Industry type="SIC" order="4" reported="0" code="6331" mnem="">Fire/marine/casualty Insurance</Industry>
+			<Industry type="SIC" order="5" reported="0" code="6311" mnem="">Life Insurance</Industry>
+		</IndustryInfo>
+	</peerInfo>
+	<officers>
+		<officer rank="1" since="08/09/2016">
+			<firstName>Dinesh</firstName>
+			<mI>Kumar</mI>
+			<lastName>Khara</lastName>
+			<age>59 </age>
+			<title startYear="2020" startMonth="10" startDay="07" iD1="CHM" abbr1="Chmn." iD2="DRC" abbr2="Dir.">Chairman of the Board</title>
+		</officer>
+		<officer rank="2" since="10/01/2020">
+			<firstName>Charanjit</firstName>
+			<mI>Surinder</mI>
+			<lastName>Singh</lastName>
+			<age></age>
+			<title startYear="2020" startMonth="10" startDay="01" iD1="CFO" abbr1="CFO" iD2="" abbr2="">Chief Financial Officer</title>
+		</officer>
+		<officer rank="3" since="09/01/2020">
+			<firstName>Sham</firstName>
+			<mI></mI>
+			<lastName>K</lastName>
+			<age></age>
+			<title startYear="2020" startMonth="09" startDay="01" iD1="CCO" abbr1="Chief Comp." iD2="SEC" abbr2="Secy.">Compliance Officer, Company Secretary</title>
+		</officer>
+		<officer rank="4" since="06/22/2018">
+			<firstName>Anil</firstName>
+			<mI></mI>
+			<lastName>Kishora</lastName>
+			<age></age>
+			<title startYear="2018" startMonth="06" startDay="22" iD1="CRO" abbr1="CRO" iD2="DMD" abbr2="Dep-Mgng.Dir.">Chief Risk Officer, Deputy Managing Director</title>
+		</officer>
+		<officer rank="5" since="06/25/2018">
+			<firstName>Arijit</firstName>
+			<mI></mI>
+			<lastName>Basu</lastName>
+			<age></age>
+			<title startYear="2018" startMonth="06" startDay="25" iD1="MDR" abbr1="Mgng.Dir." iD2="EDR" abbr2="Exec. Dir.">Managing Director, Commercial Clients Group &amp; IT, Executive Director</title>
+		</officer>
+		<officer rank="6" since="08/26/2014">
+			<firstName>Praveen</firstName>
+			<mI>Kumar</mI>
+			<lastName>Gupta</lastName>
+			<age></age>
+			<title startYear="2015" startMonth="10" startDay="31" iD1="MDR" abbr1="Mgng.Dir." iD2="EDR" abbr2="Exec. Dir.">Managing Director - Retail &amp; Digital Banking, Executive Director</title>
+		</officer>
+		<officer rank="7" since="01/20/2020">
+			<firstName>C.</firstName>
+			<mI>S.</mI>
+			<lastName>Setty</lastName>
+			<age></age>
+			<title startYear="2020" startMonth="01" startDay="20" iD1="MDR" abbr1="Mgng.Dir." iD2="EDR" abbr2="Exec. Dir.">Managing Director (Retail &amp; Digital Banking), Executive Director</title>
+		</officer>
+		<officer rank="8" since="01/28/2021">
+			<firstName>Ashwini</firstName>
+			<mI>Kumar</mI>
+			<lastName>Tewari</lastName>
+			<age>53 </age>
+			<title startYear="2021" startMonth="01" startDay="28" iD1="MDR" abbr1="Mgng.Dir." iD2="" abbr2="">Managing Director</title>
+		</officer>
+		<officer rank="9" since="08/24/2020">
+			<firstName>Ashwini</firstName>
+			<mI></mI>
+			<lastName>Bhatia</lastName>
+			<age>58 </age>
+			<title startYear="2020" startMonth="08" startDay="24" iD1="DMD" abbr1="Dep-Mgng.Dir." iD2="" abbr2="">Deputy Managing Director</title>
+		</officer>
+	</officers>
+	<Ratios PriceCurrency="INR" ReportingCurrency="INR" ExchangeRate="1.00000" LatestAvailableDate="2021-03-31">
+		<Group ID="Price and Volume">
+			<Ratio FieldName="NPRICE" Type="N">437.25000</Ratio>
+			<Ratio FieldName="NHIG" Type="N">437.95000</Ratio>
+			<Ratio FieldName="NLOW" Type="N">169.25000</Ratio>
+			<Ratio FieldName="PDATE" Type="D">2021-06-02T00:00:00</Ratio>
+			<Ratio FieldName="VOL10DAVG" Type="N">76.18583</Ratio>
+			<Ratio FieldName="EV" Type="N">4763178.00000</Ratio>
+		</Group>
+		<Group ID="Income Statement">
+			<Ratio FieldName="MKTCAP" Type="N">3902287.00000</Ratio>
+			<Ratio FieldName="AREV" Type="N">2781155.00000</Ratio>
+			<Ratio FieldName="AEBITD" Type="N">427540.20000</Ratio>
+			<Ratio FieldName="ANIAC" Type="N">224054.50000</Ratio>
+		</Group>
+		<Group ID="Per share data">
+			<Ratio FieldName="AEPSXCLXOR" Type="N">25.11000</Ratio>
+			<Ratio FieldName="AREVPS" Type="N">257.00970</Ratio>
+			<Ratio FieldName="ABVPS" Type="N">308.76630</Ratio>
+			<Ratio FieldName="ACSHPS" Type="N">389.60520</Ratio>
+			<Ratio FieldName="ACFSHR" Type="N">31.36952</Ratio>
+			<Ratio FieldName="ADIVSHR" Type="N">4.00000</Ratio>
+		</Group>
+		<Group ID="Other Ratios">
+			<Ratio FieldName="AGROSMGN" Type="N">-99999.99000</Ratio>
+			<Ratio FieldName="AROEPCT" Type="N">8.50913</Ratio>
+			<Ratio FieldName="APR2REV" Type="N">1.70162</Ratio>
+			<Ratio FieldName="APEEXCLXOR" Type="N">17.41338</Ratio>
+			<Ratio FieldName="APRICE2BK" Type="N">1.41612</Ratio>
+			<Ratio FieldName="Employees" Type="N">249448</Ratio>
+		</Group>
+	</Ratios>
+	<ForecastData ConsensusType="Mean" CurFiscalYear="2022" CurFiscalYearEndMonth="3" CurInterimEndCalYear="2021" CurInterimEndMonth="6" EarningsBasis="PRX">
+		<Ratio FieldName="ConsRecom" Type="N">
+			<Value PeriodType="CURR">1.3864</Value>
+		</Ratio>
+		<Ratio FieldName="TargetPrice" Type="N">
+			<Value PeriodType="CURR">276.25000</Value>
+		</Ratio>
+		<Ratio FieldName="ProjLTGrowthRate" Type="N">
+			<Value PeriodType="CURR">157.3000</Value>
+		</Ratio>
+		<Ratio FieldName="ProjPE" Type="N">
+			<Value PeriodType="CURR">12.19965</Value>
+		</Ratio>
+		<Ratio FieldName="ProjSales" Type="N">
+			<Value PeriodType="CURR">1671363.53370</Value>
+		</Ratio>
+		<Ratio FieldName="ProjSalesQ" Type="N">
+			<Value PeriodType="CURR">395935.00000</Value>
+		</Ratio>
+		<Ratio FieldName="ProjEPS" Type="N">
+			<Value PeriodType="CURR">35.84120</Value>
+		</Ratio>
+		<Ratio FieldName="ProjEPSQ" Type="N">
+			<Value PeriodType="CURR">-99999.99000</Value>
+		</Ratio>
+		<Ratio FieldName="ProjProfit" Type="N">
+			<Value PeriodType="CURR">430977.74710</Value>
+		</Ratio>
+		<Ratio FieldName="ProjDPS" Type="N">
+			<Value PeriodType="CURR">4.33900</Value>
+		</Ratio>
+	</ForecastData>
+</ReportSnapshot>

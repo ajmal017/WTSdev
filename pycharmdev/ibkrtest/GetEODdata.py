@@ -54,6 +54,11 @@ class MarketReader(EWrapper, EClient):
             dbcursor.close()
 
     @iswrapper
+    def historicalDataEnd(self, reqId: int, start: str, end: str):
+        # super().historicalDataEnd(reqId, start, end)
+        print("HistoricalDataEnd. ReqId:", reqId, "from", start, "to", end)
+
+    @iswrapper
     def error(self, reqId, code, msg):
         ''' Called if an error occurs '''
         print('Error {}: {} : {}'.format(code, self.ibkr_current_symbol, msg))
@@ -64,7 +69,7 @@ def main():
 
     # Request historical bars for each of the stock in the table IBKR_SYMBOLS_EQUITY
 
-    now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
+    until_datetime = datetime.now().strftime("%Y%m%d, %H:%M:%S")
 
     # Set the IBKR contract details
     con = Contract()
@@ -76,7 +81,7 @@ def main():
 
     dbcursor = client.dbconn.cursor()
     dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE '''
-    # dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
+    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
 
     dbcursor.execute(dbquery)
     dbrecordset = dbcursor.fetchall()
@@ -85,7 +90,8 @@ def main():
         client.ibkr_current_symbol = dbrow[0]
         con.symbol = dbrow[0]
         reqnum += 1
-        client.reqHistoricalData(reqnum, con, now, '1 m', '1 day', 'TRADES', False, 1, False, [])
+        until_datetime = '20210415, 17:00:00'
+        client.reqHistoricalData(reqnum, con, until_datetime, '2 w', '1 day', 'TRADES', False, 1, False, [])
         # Sleep while the requests are processed
         time.sleep(1)
 

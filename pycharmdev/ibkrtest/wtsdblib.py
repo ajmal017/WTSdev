@@ -2,10 +2,10 @@ import psycopg2
 
 
 class wtsdbconn:
-    def newconnection(system):
-        if (system == 'WTS'):
+    def newconnection(database):
+        if (database == 'WTS'):
             return (None)
-        elif (system == 'WTSDEV'):
+        elif (database == 'WTSDEV'):
             return (psycopg2.connect(user="postgres",
                              password="Pas2021!",
                              host="172.17.0.2",

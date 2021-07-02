@@ -27,7 +27,7 @@ def insert():
 
         dbconn = wtsdblib.wtsdbconn.newconnection('WTSDEV')
         dbcursor = dbconn.cursor()
-        dbquery = '''INSERT INTO wtst."IBKR_EOD_DATA"("IBKR_SYMBOL","Date", "Open", "High", "Low", "Close", "Volume", "Average", "BarCount") VALUES (%s, date(%s), %s, %s, %s, %s, %s, %s, %s)'''
+        dbquery = '''INSERT INTO wtst.ibkr_eod_data(ibkr_symbol,date, "open", "high", "low", "close", "volume", "average", "tradecount") VALUES (%s, date(%s), %s, %s, %s, %s, %s, %s, %s)'''
         dbparams = (psymbol, pdate, popen, phigh, plow, pclose, pvolume, paverage, pbarcount)
 
         dbcursor.execute(dbquery, dbparams)
@@ -44,8 +44,8 @@ def select():
         dbconn = wtsdblib.wtsdbconn.newconnection('WTSDEV')
         dbcursor = dbconn.cursor()
 
-        # dbquery = ''' SELECT MAX(IED."Date") FROM wtst."IBKR_EOD_DATA" IED WHERE IED."IBKR_SYMBOL" = 'RELIANCE' '''
-        dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE '''
+        # dbquery = ''' SELECT MAX(IED."date") FROM wtst."ibkr_eod_data" IED WHERE IED."ibkr_symbol" = 'RELIANCE' '''
+        dbquery = ''' SELECT ISE."ibkr_symbol" FROM wtst."ibkr_symbols" ISE '''
 
         dbcursor.execute(dbquery)
         dbrecordset = dbcursor.fetchall()

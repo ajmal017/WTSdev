@@ -44,9 +44,10 @@ class MarketReader(EWrapper, EClient):
         #self.dff = pd.concat([self.dff, df1])
         try:
             dbcursor = self.dbconn.cursor()
-            dbquery = '''INSERT INTO wtst."IBKR_EOD_DATA"("IBKR_SYMBOL","Date", "Open", "High", "Low", "Close", "Volume", "Average", "BarCount") VALUES (%s, date(%s), %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING '''
+            dbquery = '''INSERT INTO wtst."ibkr_eod_data"("ibkr_symbol","date", "open", "high", "low", "close", "volume", "average", "trade_count") VALUES (%s, date(%s), %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING '''
             dbparams = (self.ibkr_current_symbol, bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume, bar.average, bar.barCount)
-            dbcursor.execute(dbquery, dbparams)
+            #dbcursor.execute(dbquery, dbparams)
+            print(bar)
             self.dbconn.commit()
         except (Exception, psycopg2.Error) as err:
             print("Failed to insert record into table", err)
@@ -67,8 +68,6 @@ def main():
     # Create the client and connect to TWS & Database
     client = MarketReader('127.0.0.1', 7497, 0, dbsystem='WTSDEV')
 
-    # Request historical bars for each of the stock in the table IBKR_SYMBOLS_EQUITY
-
     until_datetime = datetime.now().strftime("%Y%m%d, %H:%M:%S")
 
     # Set the IBKR contract details
@@ -80,8 +79,8 @@ def main():
     # For the symbol, loop the values in the table.
 
     dbcursor = client.dbconn.cursor()
-    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE '''
-    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
+    dbquery = ''' SELECT ISE."ibkr_symbol" FROM wtst.ibkr_symbols ISE '''
+    dbquery = ''' SELECT ISE."ibkr_symbol" FROM wtst."ibkr_symbols" ISE WHERE ISE."ibkr_symbol" = 'RELIANCE' '''
 
     dbcursor.execute(dbquery)
     dbrecordset = dbcursor.fetchall()
@@ -90,10 +89,10 @@ def main():
         client.ibkr_current_symbol = dbrow[0]
         con.symbol = dbrow[0]
         reqnum += 1
-        until_datetime = '20210415, 17:00:00'
-        client.reqHistoricalData(reqnum, con, until_datetime, '2 w', '1 day', 'TRADES', False, 1, False, [])
+        until_datetime = '20210629, 15:30:00'
+        client.reqHistoricalData(reqnum, con, until_datetime, '300 S', '5 secs', 'TRADES', False, 1, False, [])
         # Sleep while the requests are processed
-        time.sleep(1)
+        time.sleep(5)
 
     # Finally, give additional 5 seconds for the code to run.
     time.sleep(5)

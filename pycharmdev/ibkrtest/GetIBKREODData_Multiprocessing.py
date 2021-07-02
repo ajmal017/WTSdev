@@ -20,8 +20,8 @@ BACKUP_FOLDER = '/home/wts/dev/backup/'
 TEMP_FILE = '/home/wts/dev/temp/IBKREODData.csv'
 DATABASE = 'WTSDEV'
 #SCHEMA = '' (Not yet implemented)
-TIME_FRAME = '5 secs'
-TIME_PERIOD = '1 M'
+TIME_FRAME = '1 day'
+TIME_PERIOD = '2 Y'
 
 #   clean_csv_value:
 #       Transforms a single value
@@ -62,7 +62,7 @@ class MarketReader(EWrapper, EClient):
             print("\nProcess: {} - Error in starting the thread for Process".format(self.process_index))
 
     @iswrapper
-    def nextValidID(self, orderId):
+    def nextValidId(self, orderId):
         print(f"Process: {self.process_index} - TWS Connection established ")
         self.processing_flag = 0
 
@@ -94,19 +94,21 @@ class MarketReader(EWrapper, EClient):
     def error(self, reqId, code, msg):
         ''' Called if an error occurs '''
         print('Process: {} Error {}: {} : {}'.format(self.process_index, code, self.ibkr_current_symbol, msg))
-        self.processing_flag = 0
+        if code not in [2104, 2106, 2108, 2158]:
+            self.processing_flag = 0
 
 # This function is called from all the processes.
 def gethistoricaldata(process_index, symbol_queue):
     # Create the client and connect to TWS & Database
     client = MarketReader('127.0.0.1', 7497, process_index)
+
     # Wait till the connection retrieves connection with all the data forms.
     while client.processing_flag is None or client.processing_flag == 1:
         print(f"Process {process_index} Connecting...")
         time.sleep(0.2)
     print(f"Process {process_index} Connected...")
 
-    #time.sleep(0.25)
+    time.sleep(0.25)
     # Closing the dummy file opened as part of object initiation. Actual file will be opened by the process.
     if client.fileptr is not None:
         client.fileptr.close()
@@ -133,6 +135,7 @@ def gethistoricaldata(process_index, symbol_queue):
         except queue.Empty:
             print("Process: {} - Exception - Queue is empty".format(process_index))
             break
+
         # todo: If any other genuine error, need to put back the symbol back in queue. do it with caution !!!
     print("Process: {} - Queue processing is completed".format(process_index))
     client.fileptr.close()
@@ -155,8 +158,11 @@ def main():
     # For the symbol, loop the values in the table.
     dbconn = wtsdblib.wtsdbconn.newconnection(DATABASE)
     dbcursor = dbconn.cursor()
-    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."SERIES" = 'EQ' AND ISE."IBKR_SYMBOL" > 'S' LIMIT 25'''
-    dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
+    #dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."SERIES" = 'EQ' AND ISE."IBKR_SYMBOL" > 'S' LIMIT 25'''
+    # Focus stocks
+    dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
+    #Reliance
+    #dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
 
     dbcursor.execute(dbquery)
     dbrecordset = dbcursor.fetchall()
@@ -176,8 +182,27 @@ def main():
     proc1.start()
     time.sleep(0.25)
 
-    proc1.join()
+    proc2.start()
+    time.sleep(0.25)
 
+    proc3.start()
+    time.sleep(0.25)
+
+    proc4.start()
+    time.sleep(0.25)
+
+    proc5.start()
+    time.sleep(0.25)
+
+    proc6.start()
+    time.sleep(0.25)
+
+    proc1.join()
+    proc2.join()
+    proc3.join()
+    proc4.join()
+    proc5.join()
+    proc6.join()
 
     ibkr_download_endtime = datetime.now()
 
@@ -193,7 +218,7 @@ def main():
             print(f"Successfully uploaded data from {csv_file_name}")
             #todo: Handle the issue of DB Error while inserting same data again.
             shutil.move(os.path.join(TEMP_FOLDER, csv_file_name),
-                        os.path.join(BACKUP_FOLDER, csv_file_name+"_" + datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")))
+                        os.path.join(BACKUP_FOLDER, csv_file_name+"_" + datetime.strftime(datetime.now(), "%Y%m%d_%H%M%S")))
             dbcursor.close()
             dbconn.commit()
         except psycopg2.Error as err:

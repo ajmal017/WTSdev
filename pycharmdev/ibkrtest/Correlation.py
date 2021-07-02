@@ -8,12 +8,12 @@ import wtsdblib as db
 def compute_correlation():
     dbconn = db.wtsdbconn.newconnection('WTSDEV')
     dbcursor = dbconn.cursor()
-    dbquery= '''select ned."DATE", ied."Volume", ned."VOLUME" 
-                from wtst."IBKR_EOD_DATA" ied, wtst."NSE_EOD_DATA" ned 
-                where ied."IBKR_SYMBOL" = ned."SYMBOL" AND
-                ied."IBKR_SYMBOL" = 'RELIANCE'
-                and ied."Date" = ned."DATE"
-                and ied."Volume" != ned."VOLUME"'''
+    dbquery= '''select ned."DATE", ied."volume", ned."VOLUME" 
+                from wtst."ibkr_eod_data" ied, wtst."NSE_EOD_DATA" ned 
+                where ied."ibkr_symbol" = ned."SYMBOL" AND
+                ied."ibkr_symbol" = 'RELIANCE'
+                and ied."date" = ned."DATE"
+                and ied."volume" != ned."VOLUME"'''
     dbcursor.execute(dbquery)
     dbrecordset = dbcursor.fetchall()
     df = pd.DataFrame()

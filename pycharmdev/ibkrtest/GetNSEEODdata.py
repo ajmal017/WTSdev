@@ -108,7 +108,7 @@ def main():
             dbcursor = dbconn.cursor()
             f = open( os.path.join(download_path,filename),'r')
             f.readline() # Readline makes the file pointer f to skip the header (first line)
-            dbcursor.copy_from(f,'wtst."NSE_EOD_DATA"("SYMBOL", "SERIES", "OPEN", "HIGH", "LOW", "CLOSE", "LAST", "PREVCLOSE", "VOLUME", "TRADEVALUE", "DATE", "BARCOUNT", "ISINCODE","DUMMY")', sep=',', null='\\N', size=8192, columns=None)
+            dbcursor.copy_from(f,'wtst.nse_eod_data(symbol, series, open, high, low, close, last, prevclose, volume, tradevalue, date, tradecount, isincode, dummy)', sep=',', null='\\N', size=8192, columns=None)
             f.close()
             dbconn.commit()
             print(f"Successfully uploaded data from {filename}")

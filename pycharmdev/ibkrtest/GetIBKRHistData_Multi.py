@@ -1,6 +1,6 @@
 ''' Demonstrates different ways to request financial data '''
 import queue
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Thread
 import time
 import multiprocessing
@@ -19,9 +19,11 @@ TEMP_FOLDER = '/home/wts/dev/temp/'
 BACKUP_FOLDER = '/home/wts/dev/backup/'
 TEMP_FILE = '/home/wts/dev/temp/IBKREODData.csv'
 DATABASE = 'WTSDEV'
-#SCHEMA = '' (Not yet implemented)
+SCHEMA = '' # (Not yet implemented)
 TIME_FRAME = '1 day'
-TIME_PERIOD = '2 Y'
+STR_START_DATE = '20210737'
+STR_END_DATE = 'NOW'
+LIMIT_CLIENT_COUNT = 32
 
 #   clean_csv_value:
 #       Transforms a single value
@@ -53,6 +55,7 @@ class MarketReader(EWrapper, EClient):
         self.fileptr = open(TEMP_FILE, "w")
         self.process_index = client_id
         self.ibkr_current_symbol = ''
+        self.ibkr_current_symbol_start_date = ''
         try:
             # Launch the client thread
             thread = Thread(target=self.run)
@@ -69,25 +72,42 @@ class MarketReader(EWrapper, EClient):
     @iswrapper
     def historicalData(self, reqId, bar):
         ''' Called in response to reqHistoricalData '''
-        # print(self.fileptr)
-        self.fileptr.write(','.join(map(clean_csv_value, (\
-                TIME_FRAME,
-                self.ibkr_current_symbol,\
-                bar.date,\
-                bar.open,\
-                bar.high,\
-                bar.low,\
-                bar.close,\
-                bar.volume,\
-                bar.average,\
-                bar.barCount\
-                    ))) + '\n'\
-                           )
+        # print(self.fileptr)\
+
+        if TIME_FRAME == '1 day':
+            if datetime.strptime(bar.date, "%Y%m%d").date() < self.ibkr_current_symbol_start_date:
+                return
+            self.fileptr.write(','.join(map(clean_csv_value, (\
+                    self.ibkr_current_symbol,\
+                    bar.date,\
+                    bar.open,\
+                    bar.high,\
+                    bar.low,\
+                    bar.close,\
+                    bar.volume,\
+                    bar.average,\
+                    bar.barCount\
+                        ))) + '\n'\
+                               )
+        else:
+            self.fileptr.write(','.join(map(clean_csv_value, ( \
+                TIME_FRAME,\
+                self.ibkr_current_symbol, \
+                bar.date, \
+                bar.open, \
+                bar.high, \
+                bar.low, \
+                bar.close, \
+                bar.volume, \
+                bar.average, \
+                bar.barCount \
+                ))) + '\n' \
+                               )
 
     @iswrapper
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         print('HistoricalDataEnd. ProcessID: {} ReqID: {}, from: {}, to: {}, for: {}'\
-              .format(self.process_index, reqId, start,end, self.ibkr_current_symbol))
+              .format(self.process_index, reqId, start, end, self.ibkr_current_symbol))
         self.processing_flag = 0
 
     @iswrapper
@@ -123,11 +143,20 @@ def gethistoricaldata(process_index, symbol_queue):
 
     while not symbol_queue.empty():
         try:
-            client.ibkr_current_symbol = symbol_queue.get()
+            symbol_data = symbol_queue.get()
+            client.ibkr_current_symbol = symbol_data['symbol']
             con.symbol = client.ibkr_current_symbol
             req_num += 1
             client.processing_flag = 1
-            now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
+            if TIME_FRAME == '1 day':
+                delta = datetime.now().date() - symbol_data['max_date'].date()
+                TIME_PERIOD = f'{delta.days} d'
+                now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
+                client.ibkr_current_symbol_start_date = symbol_data['max_date'].date() + timedelta(days=1)
+            else:
+                end_date = datetime.strptime(STR_END_DATE, "YYYYMMDD")
+                TIME_PERIOD = '1 d'
+
             client.reqHistoricalData(req_num, con, now, TIME_PERIOD, TIME_FRAME, 'TRADES', False, 1, False, [])
             # Sleep while the requests are processed
             while client.processing_flag == 1:
@@ -143,14 +172,24 @@ def gethistoricaldata(process_index, symbol_queue):
     if client.dbconn is not None:
         client.dbconn.close()
 
-def main():
+def get_ibkr_hist_data():
+    # Set File level configutation variables based on parameters (if passed)
+    global DATABASE, SCHEMA, TIME_FRAME, STR_START_DATE, STR_END_DATE, LIMIT_CLIENT_COUNT
+
+    #DATABASE = 'WTSDEV'
+    # SCHEMA = '' (Not yet implemented)
+    #TIME_FRAME = '1 day'
+    #STR_START_DATE = '20210730'
+    #STR_END_DATE = 'NOW'
+    #get_ibkr_hist_data_main()
+
 
     for default_handler in logging.root.handlers:
         logging.root.removeHandler(default_handler)
     logging.basicConfig(level=logging.INFO)
 
     mainlogger = logging.Logger("IBKREOD_MAIN")
-    mainlogger.setLevel(logging.WARNING)
+    mainlogger.setLevel(logging.DEBUG)
     symbol_queue = multiprocessing.Queue()
     mainlogger.critical("Main process started")
 
@@ -158,51 +197,46 @@ def main():
     # For the symbol, loop the values in the table.
     dbconn = wtsdblib.wtsdbconn.newconnection(DATABASE)
     dbcursor = dbconn.cursor()
-    #dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."SERIES" = 'EQ' AND ISE."IBKR_SYMBOL" > 'S' LIMIT 25'''
-    # Focus stocks
-    dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
-    #Reliance
-    #dbquery = ''' SELECT ISE."IBKR_SYMBOL" FROM wtst."IBKR_SYMBOLS_EQUITY" ISE WHERE ISE."IBKR_SYMBOL" = 'RELIANCE' '''
+
+    if (TIME_FRAME == '1 day'):
+        dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('TODAY')-364) AS max_date
+        FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ'  '''
+
+        #dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('05 -JUL-2020')) AS max_date
+        #FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ' AND isym.ibkr_symbol in ('RELIANCE','20MICRONS')  '''
+
+    else:
+        #dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
+        dbquery = ''' SELECT fs.ibkr_symbol,date('29-Jun-2021 0:0:0') FROM wtst.focus_stocks fs WHERE fs.ibkr_symbol = 'RELIANCE' '''
 
     dbcursor.execute(dbquery)
     dbrecordset = dbcursor.fetchall()
-    for dbrow in dbrecordset:
-        symbol_queue.put(dbrow[0])
-
     dbcursor.close()
+
+    for dbrow in dbrecordset:
+        symbol_queue.put({"symbol": dbrow[0], "max_date": dbrow[1]})
+
+    # Number of clients reduced if the number of symbols is lesser than the configured Client limit.
+    if symbol_queue.qsize() < LIMIT_CLIENT_COUNT:
+        LIMIT_CLIENT_COUNT = symbol_queue.qsize()
+
     start_time = datetime.now()
-    proc1 = multiprocessing.Process(target=gethistoricaldata, args=(0,symbol_queue))
-    proc2 = multiprocessing.Process(target=gethistoricaldata, args=(1,symbol_queue))
-    proc3 = multiprocessing.Process(target=gethistoricaldata, args=(2,symbol_queue))
-    proc4 = multiprocessing.Process(target=gethistoricaldata, args=(3,symbol_queue))
-    proc5 = multiprocessing.Process(target=gethistoricaldata, args=(4, symbol_queue))
-    proc6 = multiprocessing.Process(target=gethistoricaldata, args=(5, symbol_queue))
 
-    print(datetime.now())
-    proc1.start()
-    time.sleep(0.25)
+    # Create processes for each client.
+    client_id = 0
+    client_df = pd.DataFrame()
+    while client_id < LIMIT_CLIENT_COUNT:
+        proc = multiprocessing.Process(target=gethistoricaldata, args=(client_id, symbol_queue))
+        client_df = client_df.append(pd.DataFrame.from_records([{'client_index': client_id, 'process': proc}], index='client_index'))
+        client_id += 1
 
-    proc2.start()
-    time.sleep(0.25)
+    for proc in client_df['process']:
+        proc.start()
+        time.sleep(0.25)
 
-    proc3.start()
-    time.sleep(0.25)
+    for proc in client_df['process']:
+        proc.join()
 
-    proc4.start()
-    time.sleep(0.25)
-
-    proc5.start()
-    time.sleep(0.25)
-
-    proc6.start()
-    time.sleep(0.25)
-
-    proc1.join()
-    proc2.join()
-    proc3.join()
-    proc4.join()
-    proc5.join()
-    proc6.join()
 
     ibkr_download_endtime = datetime.now()
 
@@ -211,7 +245,10 @@ def main():
             dbcursor = dbconn.cursor()
             csv_file_ptr = open(os.path.join(TEMP_FOLDER, csv_file_name), 'r')
             print(f"Uploading file: {csv_file_name}")
-            dbcursor.copy_from(csv_file_ptr,'wtst.ibkr_hist_data', sep=',', null='\\N', size=8192, columns=None)
+            if TIME_FRAME == '1 day':
+                dbcursor.copy_from(csv_file_ptr,'wtst.ibkr_eod_data(ibkr_symbol, date, open, high, low, close, volume, average, trade_count)', sep=',', null='\\N', size=8192, columns=None)
+            else:
+                dbcursor.copy_from(csv_file_ptr, 'wtst.ibkr_intraday_data', sep=',', null='\\N', size=8192, columns=None)
             csv_file_ptr.flush()
             csv_file_ptr.close()
             dbconn.commit()
@@ -237,5 +274,7 @@ def main():
     print(f"DB upload time: {db_upload_endtime - ibkr_download_endtime}")
     print(f"Total time: {db_upload_endtime - start_time}")
     print('Processes completed')
+
+
 if __name__ == '__main__':
-    main()
+    get_ibkr_hist_data()

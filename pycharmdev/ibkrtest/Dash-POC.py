@@ -22,7 +22,7 @@ dbconn = wtsdblib.wtsdbconn.newconnection('WTSDEV')
 dbcursor = dbconn.cursor()
 
 dbquery = ''' select date, ibkr_symbol, open, high, low, close from wtst.ibkr_eod_data WHERE ibkr_symbol = %s ORDER BY date DESC'''
-dbparams = ('RELIANCE',)
+dbparams = ('APOLLO',)
 dbcursor.execute(dbquery, dbparams)
 
 ohlc_recordset = dbcursor.fetchall()
@@ -58,12 +58,13 @@ fig1.update_yaxes(showspikes=True)
 
 app = dash.Dash()
 server = app.server
-app.title = 'My first web page'
+app.title = 'Dash-POC'
 colors = {
     'background': '#444444',
     'text': '#FFFFFF'
 }
 
+onemin_df = pd.DataFrame()
 def generate_table(dataframe, max_rows=10):
     return html.Table([
         html.Thead(
@@ -84,7 +85,6 @@ app.layout = html.Div(style={'backgroundColor': '#444444', 'color':'#DDDDDD'}, c
             'color': colors['text']
         }
     ),
-    html.P('This is a paragraph text used to explain things'),
 
     html.Div(children='Dash: A web application framework for Python.', style={
         'textAlign': 'center',
@@ -98,7 +98,7 @@ app.layout = html.Div(style={'backgroundColor': '#444444', 'color':'#DDDDDD'}, c
     ]),
     dcc.Graph(id='intraday-chart'),
     dcc.Graph(figure=fig1),
-    # generate_table(onemin_df, 100)
+    generate_table(ohlc_db_df, 100)
 ])
 
 @app.callback(
@@ -106,18 +106,15 @@ app.layout = html.Div(style={'backgroundColor': '#444444', 'color':'#DDDDDD'}, c
     Input('stock-name','value')
 )
 def update_intraday_chart(stock_name):
+    global onemin_df
 
-    # dbquery = ''' select * from wtst.ibkr_hist_data '''
-
-    dbquery = ''' select date_time as plot_date, ibkr_symbol, open, high, low, close from wtst.ibkr_hist_data 
-    WHERE ibkr_symbol = %s and time_frame = '1 min' and date_time > '29-Jun-2021' and date_time < '30-Jun-2021'  
+    dbquery = ''' select date_time as plot_date, ibkr_symbol, open, high, low, close from wtst.ibkr_intraday_data 
+    WHERE ibkr_symbol = %s and timeframe = '1 min' and date_time > '29-Jun-2021' and date_time < '30-Jun-2021'  
     ORDER BY plot_date '''
 
     dbparams = (stock_name,)
 
     dbcursor.execute(dbquery, dbparams)
-
-    onemin_df = pd.DataFrame()
     ohlc_recordset = dbcursor.fetchall()
 
     for ohlc_row in ohlc_recordset:

@@ -24,6 +24,7 @@ from wtst.nse_eod_data   '''
 dbcursor.execute(dbquery)
 dbrecordset = dbcursor.fetchall()
 nse_summary_df = pd.DataFrame()
+
 for dbrow in dbrecordset:
     nse_summary_df = pd.DataFrame({"Symbol Count": dbrow[0], "Total Records": dbrow[1], "Earliest date": dbrow[2], "Last updated": dbrow[3]}, index = [dbrow[0]])
 

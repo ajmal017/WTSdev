@@ -193,49 +193,53 @@ def get_ibkr_hist_data():
     symbol_queue = multiprocessing.Queue()
     mainlogger.critical("Main process started")
 
-    # Request historical bars for each of the stock in the table IBKR_SYMBOLS_EQUITY
-    # For the symbol, loop the values in the table.
     dbconn = wtsdblib.wtsdbconn.newconnection(DATABASE)
-    dbcursor = dbconn.cursor()
-
-    if (TIME_FRAME == '1 day'):
-        dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('TODAY')-364) AS max_date
-        FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ'  '''
-
-        #dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('05 -JUL-2020')) AS max_date
-        #FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ' AND isym.ibkr_symbol in ('RELIANCE','20MICRONS')  '''
-
-    else:
-        #dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
-        dbquery = ''' SELECT fs.ibkr_symbol,date('29-Jun-2021 0:0:0') FROM wtst.focus_stocks fs WHERE fs.ibkr_symbol = 'RELIANCE' '''
-
-    dbcursor.execute(dbquery)
-    dbrecordset = dbcursor.fetchall()
-    dbcursor.close()
-
-    for dbrow in dbrecordset:
-        symbol_queue.put({"symbol": dbrow[0], "max_date": dbrow[1]})
-
-    # Number of clients reduced if the number of symbols is lesser than the configured Client limit.
-    if symbol_queue.qsize() < LIMIT_CLIENT_COUNT:
-        LIMIT_CLIENT_COUNT = symbol_queue.qsize()
-
     start_time = datetime.now()
 
-    # Create processes for each client.
-    client_id = 0
-    client_df = pd.DataFrame()
-    while client_id < LIMIT_CLIENT_COUNT:
-        proc = multiprocessing.Process(target=gethistoricaldata, args=(client_id, symbol_queue))
-        client_df = client_df.append(pd.DataFrame.from_records([{'client_index': client_id, 'process': proc}], index='client_index'))
-        client_id += 1
+    skip_download = False
+    if (skip_download):
+        mainlogger = logging.Logger("Download skipped")
+    else:
+        # Request historical bars for each of the stock in the table IBKR_SYMBOLS_EQUITY
+        # For the symbol, loop the values in the table.
+        dbcursor = dbconn.cursor()
+        if (TIME_FRAME == '1 day'):
+            dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('TODAY')-364) AS max_date
+            FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ'  '''
 
-    for proc in client_df['process']:
-        proc.start()
-        time.sleep(0.25)
+            #dbquery = ''' SELECT ibkr_symbol, coalesce((select MAX(date) from wtst.ibkr_eod_data ied where isym.ibkr_symbol = ied.ibkr_symbol) ,DATE('05 -JUL-2020')) AS max_date
+            #FROM wtst.ibkr_symbols isym  WHERE isym.series = 'EQ' AND isym.ibkr_symbol in ('RELIANCE','20MICRONS')  '''
 
-    for proc in client_df['process']:
-        proc.join()
+        else:
+            #dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
+            dbquery = ''' SELECT fs.ibkr_symbol,date('29-Jun-2021 0:0:0') FROM wtst.focus_stocks fs WHERE fs.ibkr_symbol = 'RELIANCE' '''
+
+        dbcursor.execute(dbquery)
+        dbrecordset = dbcursor.fetchall()
+        dbcursor.close()
+
+        for dbrow in dbrecordset:
+            symbol_queue.put({"symbol": dbrow[0], "max_date": dbrow[1]})
+
+        # Number of clients reduced if the number of symbols is lesser than the configured Client limit.
+        if symbol_queue.qsize() < LIMIT_CLIENT_COUNT:
+            LIMIT_CLIENT_COUNT = symbol_queue.qsize()
+
+
+        # Create processes for each client.
+        client_id = 0
+        client_df = pd.DataFrame()
+        while client_id < LIMIT_CLIENT_COUNT:
+            proc = multiprocessing.Process(target=gethistoricaldata, args=(client_id, symbol_queue))
+            client_df = client_df.append(pd.DataFrame.from_records([{'client_index': client_id, 'process': proc}], index='client_index'))
+            client_id += 1
+
+        for proc in client_df['process']:
+            proc.start()
+            time.sleep(0.25)
+
+        for proc in client_df['process']:
+            proc.join()
 
 
     ibkr_download_endtime = datetime.now()

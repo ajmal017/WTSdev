@@ -58,54 +58,67 @@ class update_indicators:
             return
         else:
             return
+
     def update_pct_range (self, table_name):
         dbcursor = self.dbconn.cursor()
         dbquery = f'update {self.schema}.{table_name} set pct_range = ((high-low)*100)/close where pct_range is NULL'
         dbcursor.execute(dbquery)
         self.dbconn.commit()
         dbcursor.close()
+
     def update_momentum(self,table_name):
-        dbcursor = self.dbconn.cursor()
-        dbquery = f'select max(date) from {self.schema}.{table_name}'
-        dbcursor.execute(dbquery)
-        # Fetch a single record from the cursor. Convert a single value tuple into a date variable.
-        (max_date,) = dbcursor.fetchone()
-        #dbquery = f'select ibkr_symbol from {self.schema}.{table_name} where date = %s and ibkr_symbol = %s'
-        #dbparams = (max_date,'ICICIPRUL')
-        #dbquery = f'select ibkr_symbol from {self.schema}.{table_name} where date = %s'
-        dbquery = f'''select ibkr_symbol from {self.schema}.{table_name} where date = %s and ibkr_symbol in (select ibkr_symbol from wtst.ibkr_symbols where fo_stock = True) and exp_reg_coefficient >= 0.75 order by momentum_indicator DESC '''
-        dbparams = (max_date,)
-        dbcursor.execute(dbquery,dbparams)
-        stock_list = dbcursor.fetchall()
-        for stock_data in stock_list:
-            # Fetched latest 90 records but in ascending order.
-            dbquery = f'''select ibkr_symbol, date, close from 
-            (select ibkr_symbol, date, close from {self.schema}.{table_name} where ibkr_symbol = %s and date <= %s order by date desc limit 90) temp 
-            order by date asc'''
-            dbparams = (stock_data[0],max_date)
+        if table_name == 'ibkr_eod_data':
+            dbcursor = self.dbconn.cursor()
+            dbquery = f'select max(date) from {self.schema}.{table_name}'
+            dbcursor.execute(dbquery)
+            # Fetch a single record from the cursor. Convert a single value tuple into a date variable.
+            (max_date,) = dbcursor.fetchone()
+            #dbquery = f'select ibkr_symbol from {self.schema}.{table_name} where date = %s and ibkr_symbol = %s'
+            #dbparams = (max_date,'ICICIPRUL')
+            #dbquery = f'select ibkr_symbol from {self.schema}.{table_name} where date = %s'
+            dbquery = f'''select ibkr_symbol from {self.schema}.{table_name} where date = %s and ibkr_symbol in (select ibkr_symbol from wtst.ibkr_symbols where fo_stock = True)  order by momentum_indicator DESC '''
+            dbparams = (max_date,) # todo: need to check if max_date is null
+            max_date = datetime(year=2021, month=7, day=16)
             dbcursor.execute(dbquery,dbparams)
-            price_list = dbcursor.fetchall()
-            df = pd.DataFrame(price_list,columns=['ibkr_symbol','date','close'])
-            df = df.sort_values(by='date')
-            slope, start = np.polyfit(df.index,np.log(df['close']),1)
-            df['estimated_close'] = [( np.exp(slope * xval) * np.exp(start)) for xval in df.index]
-            correlation = np.corrcoef( df['close'], df['estimated_close'])
-            r_squared = correlation[0, 1] ** 2
-            if True: # Enabled only while analyzing
-                print(f'Annualised Slope = {slope*250}, r_squared = {r_squared}, Momentum indicator = {slope*250*r_squared*r_squared}')
-                print(df)
-                plt.plot( df['date'], df['close'])
-                plt.plot( df['date'], df['estimated_close'])
-                plt.title(f'Annualised Slope = {slope*250}, r_squared = {r_squared}, Momentum indicator = {slope*250*r_squared*r_squared}')
-                plt.ylabel(stock_data[0])
-                #plt.show()
-                continue
-            dbquery = f''' update {self.schema}.{table_name} set exp_reg_slope_annual = %s, exp_reg_coefficient = %s, momentum_indicator = %s  
-            where ibkr_symbol = %s and date = %s'''
-            dbparams = (slope*250, r_squared, slope*250*r_squared*r_squared, stock_data[0], max_date)
-            dbcursor.execute(dbquery,dbparams)
-        self.dbconn.commit()
-        dbcursor.close()
+            stock_list = dbcursor.fetchall()
+            for stock_data in stock_list:
+                # Fetched latest 90 records but in ascending order.
+                dbquery = f'''select ibkr_symbol, date, close from 
+                (select ibkr_symbol, date, close from {self.schema}.{table_name} where ibkr_symbol = %s and date <= %s order by date desc limit 90) temp 
+                order by date asc'''
+                dbparams = (stock_data[0],max_date)
+                dbcursor.execute(dbquery,dbparams)
+                price_list = dbcursor.fetchall()
+                df = pd.DataFrame(price_list,columns=['ibkr_symbol','date','close'])
+                df = df.sort_values(by='date')
+                slope, start = np.polyfit(df.index,np.log(df['close']),1)
+                df['estimated_close'] = [( np.exp(slope * xval) * np.exp(start)) for xval in df.index]
+                correlation = np.corrcoef( df['close'], df['estimated_close'])
+                r_squared = correlation[0, 1] ** 2
+                if True: # Enabled only while analyzing
+                    print(f'Annualised Slope = {slope*250}, r_squared = {r_squared}, Momentum indicator = {slope*250*r_squared*r_squared}')
+                    print(df)
+                    plt.plot( df['date'], df['close'])
+                    plt.plot( df['date'], df['estimated_close'])
+                    plt.title(f'Annualised Slope = {slope*250}, r_squared = {r_squared}, Momentum indicator = {slope*250*r_squared*r_squared}')
+                    plt.ylabel(stock_data[0])
+                    plt.show()
+                    continue
+                dbquery = f''' update {self.schema}.{table_name} set exp_reg_slope_annual = %s, exp_reg_coefficient = %s, momentum_indicator = %s  
+                where ibkr_symbol = %s and date = %s'''
+                dbparams = (slope*250, r_squared, slope*250*r_squared*r_squared, stock_data[0], max_date)
+                dbcursor.execute(dbquery,dbparams)
+            self.dbconn.commit()
+            dbcursor.close()
+        elif table_name == 'ibkr_intraday_data':
+            dbcursor = self.dbconn.cursor()
+            #dbquery = f'select max(date) from {self.schema}.{table_name}'
+            #dbcursor.execute(dbquery)
+            # Fetch a single record from the cursor. Convert a single value tuple into a date variable.
+            #(max_date,) = dbcursor.fetchone()
+
+            dbquery = f'''select ibkr_symbol from {self.schema}.{table_name} where date = %s and ibkr_symbol in (select ibkr_symbol from wtst.ibkr_symbols where fo_stock = True)  order by momentum_indicator ASC '''
+
 
 
 
@@ -116,7 +129,7 @@ def main():
     EXECUTE_DEV_INDICATORS = True
     if (EXECUTE_STABLE_INDICATORS):
         print(datetime.now())
-        client.update_narrow_range('ibkr_eod_data')
+        #client.update_narrow_range('ibkr_eod_data')
         client.update_pct_range('ibkr_eod_data')
         print(datetime.now())
     # Execute the current development indicator

@@ -13,14 +13,13 @@ from ibapi.wrapper import EWrapper
 import pandas as pd
 import wtsdblib
 
-
 # File level configutation/parameters
 TEMP_FOLDER = '/home/wts/dev/temp/'
 BACKUP_FOLDER = '/home/wts/dev/backup/'
 TEMP_FILE = '/home/wts/dev/temp/IBKREODData.csv'
 DATABASE = 'WTSDEV'
 SCHEMA = '' # (Not yet implemented)
-TIME_FRAME = '1 day'
+TIME_FRAME = '1 min'
 STR_START_DATE = '20210737'
 STR_END_DATE = 'NOW'
 LIMIT_CLIENT_COUNT = 32
@@ -104,6 +103,7 @@ class MarketReader(EWrapper, EClient):
                 ))) + '\n' \
                                )
 
+
     @iswrapper
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         print('HistoricalDataEnd. ProcessID: {} ReqID: {}, from: {}, to: {}, for: {}'\
@@ -113,8 +113,10 @@ class MarketReader(EWrapper, EClient):
     @iswrapper
     def error(self, reqId, code, msg):
         ''' Called if an error occurs '''
-        print('Process: {} Error {}: {} : {}'.format(self.process_index, code, self.ibkr_current_symbol, msg))
-        if code not in [2104, 2106, 2108, 2158]:
+        if code in [2103,2104,2105,2106, 2108, 2158]:
+            print('Process: {} Warning {}: {} : {}'.format(self.process_index, code, self.ibkr_current_symbol, msg))
+        else:
+            print('Process: {} Error {}: {} : {}'.format(self.process_index, code, self.ibkr_current_symbol, msg))
             self.processing_flag = 0
 
 # This function is called from all the processes.
@@ -148,16 +150,16 @@ def gethistoricaldata(process_index, symbol_queue):
             con.symbol = client.ibkr_current_symbol
             req_num += 1
             client.processing_flag = 1
+            now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
             if TIME_FRAME == '1 day':
                 delta = datetime.now().date() - symbol_data['max_date'].date()
                 TIME_PERIOD = f'{delta.days} d'
-                now = datetime.now().strftime("%Y%m%d, %H:%M:%S")
                 client.ibkr_current_symbol_start_date = symbol_data['max_date'].date() + timedelta(days=1)
             else:
-                end_date = datetime.strptime(STR_END_DATE, "YYYYMMDD")
-                TIME_PERIOD = '1 d'
+                #end_date = datetime.strptime(STR_END_DATE, "YYYYMMDD")
+                TIME_PERIOD = '5 D'
 
-            client.reqHistoricalData(req_num, con, now, TIME_PERIOD, TIME_FRAME, 'TRADES', False, 1, False, [])
+            client.reqHistoricalData(req_num, con, "20210701 17:00:00", TIME_PERIOD, TIME_FRAME, 'TRADES', False, 1, False, [])
             # Sleep while the requests are processed
             while client.processing_flag == 1:
                 time.sleep(0.2)
@@ -165,7 +167,7 @@ def gethistoricaldata(process_index, symbol_queue):
             print("Process: {} - Exception - Queue is empty".format(process_index))
             break
 
-        # todo: If any other genuine error, need to put back the symbol back in queue. do it with caution !!!
+        # todo: If any other genuine error, need to put the symbol back in queue. do it with caution !!!
     print("Process: {} - Queue processing is completed".format(process_index))
     client.fileptr.close()
     client.disconnect()
@@ -197,6 +199,7 @@ def get_ibkr_hist_data():
     start_time = datetime.now()
 
     skip_download = False
+
     if (skip_download):
         mainlogger = logging.Logger("Download skipped")
     else:
@@ -212,14 +215,19 @@ def get_ibkr_hist_data():
 
         else:
             #dbquery = ''' SELECT fs.ibkr_symbol FROM wtst.focus_stocks fs ORDER BY fs.averagetradevalue DESC'''
-            dbquery = ''' SELECT fs.ibkr_symbol,date('29-Jun-2021 0:0:0') FROM wtst.focus_stocks fs WHERE fs.ibkr_symbol = 'RELIANCE' '''
+            dbquery = ''' select iss.ibkr_symbol from wtst.ibkr_symbols iss where iss.fo_stock = True '''
+            # and ibkr_symbol = 'GUJGASLTD'
 
         dbcursor.execute(dbquery)
         dbrecordset = dbcursor.fetchall()
         dbcursor.close()
 
-        for dbrow in dbrecordset:
-            symbol_queue.put({"symbol": dbrow[0], "max_date": dbrow[1]})
+        if (TIME_FRAME == '1 day'):
+            for dbrow in dbrecordset:
+                symbol_queue.put({"symbol": dbrow[0], "max_date": dbrow[1]})
+        else:
+            for dbrow in dbrecordset:
+                symbol_queue.put({"symbol": dbrow[0]})
 
         # Number of clients reduced if the number of symbols is lesser than the configured Client limit.
         if symbol_queue.qsize() < LIMIT_CLIENT_COUNT:
@@ -233,6 +241,7 @@ def get_ibkr_hist_data():
             proc = multiprocessing.Process(target=gethistoricaldata, args=(client_id, symbol_queue))
             client_df = client_df.append(pd.DataFrame.from_records([{'client_index': client_id, 'process': proc}], index='client_index'))
             client_id += 1
+            time.sleep(0.25)
 
         for proc in client_df['process']:
             proc.start()
@@ -240,6 +249,7 @@ def get_ibkr_hist_data():
 
         for proc in client_df['process']:
             proc.join()
+            time.sleep(0.1)
 
 
     ibkr_download_endtime = datetime.now()

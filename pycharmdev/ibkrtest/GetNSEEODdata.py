@@ -44,8 +44,6 @@ def download(download_url, file_path, backup_file_path):
             print('File not found in remote server: {}'.format(err))
             return 1
 
-
-
 def download_and_unzip(download_url, file_path, backup_file_path):
     """
     download_and_unzip takes care of both downloading and uncompressing
